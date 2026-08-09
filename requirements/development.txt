@@ -250,7 +250,7 @@ filelock==3.20.3
     # via
     #   -c requirements/base-constraint.txt
     #   virtualenv
-flask==2.3.3
+flask==3.1.3
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -272,7 +272,7 @@ flask-appbuilder==5.2.2
     #   -c requirements/base-constraint.txt
     #   apache-superset
     #   apache-superset-core
-flask-babel==3.1.0
+flask-babel==4.0.0
     # via
     #   -c requirements/base-constraint.txt
     #   flask-appbuilder
@@ -309,7 +309,7 @@ flask-session==0.8.0
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-flask-sqlalchemy==2.5.1
+flask-sqlalchemy==3.0.5
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
