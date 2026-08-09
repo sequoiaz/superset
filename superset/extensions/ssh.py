@@ -54,6 +54,30 @@ logger = logging.getLogger(__name__)
 _SSH_KEY_TYPES: tuple[type[PKey], ...] = (Ed25519Key, ECDSAKey, RSAKey)
 
 
+def _apply_disabled_algorithms(
+    tunnel: sshtunnel.SSHTunnelForwarder,
+    disabled_algorithms: dict[str, list[str]],
+) -> None:
+    """Make the tunnel's paramiko transport drop ``disabled_algorithms``.
+
+    ``sshtunnel`` builds the :class:`paramiko.Transport` itself and offers no way to
+    forward paramiko's ``disabled_algorithms`` constructor argument, so wrap the
+    forwarder's transport factory instead. paramiko consults
+    ``Transport.disabled_algorithms`` lazily while negotiating
+    (``Transport._filter_algorithm``), so setting it on the freshly built,
+    not-yet-started transport still takes effect for host key (``keys``) and public
+    key authentication (``pubkeys``) algorithm selection.
+    """
+    build_transport = tunnel._get_transport
+
+    def _get_transport() -> paramiko.Transport:
+        transport = build_transport()
+        transport.disabled_algorithms = dict(disabled_algorithms)
+        return transport
+
+    tunnel._get_transport = _get_transport
+
+
 def _load_private_key(pem: str, password: str | None) -> PKey:
     """Load a private key PEM regardless of algorithm (ed25519, ECDSA, RSA).
 
@@ -111,6 +135,9 @@ class SSHManager:
         self.local_bind_address = app.config["SSH_TUNNEL_LOCAL_BIND_ADDRESS"]
         self.strict_host_key_checking = app.config.get(
             "SSH_TUNNEL_STRICT_HOST_KEY_CHECKING", False
+        )
+        self.disabled_algorithms: dict[str, list[str]] = (
+            app.config.get("SSH_TUNNEL_DISABLED_ALGORITHMS") or {}
         )
         sshtunnel.TUNNEL_TIMEOUT = app.config["SSH_TUNNEL_TIMEOUT_SEC"]
         sshtunnel.SSH_TIMEOUT = app.config["SSH_TUNNEL_PACKET_TIMEOUT_SEC"]
@@ -180,7 +207,9 @@ class SSHManager:
                 message=f"Could not connect to the SSH server: {ex}"
             ) from ex
 
-        transport = paramiko.Transport(sock)
+        transport = paramiko.Transport(
+            sock, disabled_algorithms=self.disabled_algorithms or None
+        )
         try:
             transport.start_client(timeout=sshtunnel.SSH_TIMEOUT)
             remote_key = transport.get_remote_server_key()
@@ -250,7 +279,10 @@ class SSHManager:
                 ssh_tunnel.private_key, ssh_tunnel.private_key_password
             )
 
-        return sshtunnel.open_tunnel(**params)
+        tunnel = sshtunnel.open_tunnel(**params)
+        if self.disabled_algorithms:
+            _apply_disabled_algorithms(tunnel, self.disabled_algorithms)
+        return tunnel
 
 
 class SSHManagerFactory:

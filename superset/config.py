@@ -985,6 +985,21 @@ SSH_TUNNEL_PACKET_TIMEOUT_SEC = 1.0
 #: ``server_host_key`` are still verified regardless of this flag.
 SSH_TUNNEL_STRICT_HOST_KEY_CHECKING: bool = False
 
+#: paramiko algorithms disabled when opening SSH tunnels, in the shape paramiko's
+#: ``Transport(disabled_algorithms=...)`` expects. ``keys`` covers server host key
+#: algorithms and ``pubkeys`` covers the algorithms used to sign a public key
+#: authentication request. By default the SHA-1 RSA algorithm (``ssh-rsa``) is
+#: disabled, so RSA host keys and RSA tunnel credentials negotiate ``rsa-sha2-256``
+#: or ``rsa-sha2-512`` instead: paramiko still offers ``ssh-rsa`` (PYSEC-2026-2858;
+#: fixed in paramiko's ``rsakey.py`` only in an unreleased commit), and it is the
+#: algorithm both sides settle on when the server advertises nothing better.
+#: Set to ``{}`` to restore paramiko's defaults, e.g. for an SSH server too old to
+#: support the SHA-2 RSA algorithms (pre-OpenSSH 7.2).
+SSH_TUNNEL_DISABLED_ALGORITHMS: dict[str, list[str]] = {
+    "keys": ["ssh-rsa"],
+    "pubkeys": ["ssh-rsa"],
+}
+
 
 # Feature flags may also be set via 'SUPERSET_FEATURE_' prefixed environment vars.
 DEFAULT_FEATURE_FLAGS.update(
