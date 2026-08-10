@@ -44,6 +44,20 @@ paramiko's defaults for those deployments with:
 SSH_TUNNEL_DISABLED_ALGORITHMS = {}
 ```
 
+### Flask 3 and Flask-SQLAlchemy 3
+
+Flask is bumped to `3.1.3` to pick up the fix for PYSEC-2026-2151, where a
+response was missing the `Vary: Cookie` header when the session was only probed
+for key presence (e.g. `"key" in session`), so a cached response could be served
+to the wrong user behind a shared caching proxy or CDN.
+
+Flask 3.0 removed `flask._app_ctx_stack` and `flask.helpers.locked_cached_property`,
+so this also requires `flask-sqlalchemy>=3.0.5` and `flask-babel>=4.0.0`. Custom
+configuration and third-party extensions must be Flask 3 compatible; in particular
+Flask-SQLAlchemy 3 requires an application context for `db.session`, and APIs
+removed in Flask 3 (`flask.escape`, `flask.Markup`, `app.json_encoder`,
+`before_first_request`) are no longer available to `superset_config.py`.
+
 ### Soft delete is on by default, and purging is live
 
 `SOFT_DELETE` now ships **on** (`DEFAULT_FEATURE_FLAGS`), so deleting a
