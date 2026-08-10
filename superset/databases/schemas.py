@@ -47,10 +47,10 @@ from superset.commands.database.ssh_tunnel.exceptions import (
 )
 from superset.commands.database.uploaders.base import UploadFileType
 from superset.constants import PASSWORD_MASK
-from superset.databases.types import (  # pylint:disable=unused-import
-    EncryptedDict,  # noqa: F401
+from superset.databases.types import (  # noqa: F401 # pylint:disable=unused-import
+    EncryptedDict,
     EncryptedField,
-    EncryptedString,  # noqa: F401
+    EncryptedString,
 )
 from superset.databases.utils import make_url_safe
 from superset.db_engine_specs import get_engine_spec
