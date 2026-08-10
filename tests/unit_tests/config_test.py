@@ -495,3 +495,26 @@ def test_send_mime_email_server_auth_disabled_skips_context(
 
     assert not create_default_context.called
     smtp_ssl.assert_called_once_with("localhost", 25, context=None, timeout=30)
+
+
+def test_config_fingerprint_matches_md5_prefix() -> None:
+    """
+    The fingerprint is a non-security digest used to identify the exact config
+    bytes that were executed, so it must match the plain MD5 hex prefix.
+    """
+    import hashlib
+
+    from superset.config import _config_fingerprint
+
+    source = b"FOO = 1\n"
+    assert (
+        _config_fingerprint(source)
+        == hashlib.md5(source, usedforsecurity=False).hexdigest()[:12]
+    )
+    assert len(_config_fingerprint(source)) == 12
+
+
+def test_config_fingerprint_unreadable_source() -> None:
+    from superset.config import _config_fingerprint
+
+    assert _config_fingerprint(None) == "unreadable"
