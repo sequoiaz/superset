@@ -26,6 +26,24 @@ assists people when migrating to a new version.
 
 - [42393](https://github.com/apache/superset/pull/42393): Exported dataset YAML now carries a `uuid` for each metric and column so that custom folder assignments (which reference metrics/columns by UUID) survive an import into another workspace. This affects any export bundle that contains datasets, not just a dataset export: chart, dashboard, database and full-asset exports all embed the same dataset YAML, so a dashboard exported from this release also fails to import into an older one even though no dataset was exported directly. As with `folders` and `currency_code_column`, the affected `datasets/` files fail schema validation (`Unknown field: uuid`) when imported into Superset releases that predate this change; regenerate or hand-edit exports for older targets in mixed-version fleets.
 
+### SSH tunnels no longer negotiate SHA-1 RSA
+
+SSH tunnels now disable paramiko's `ssh-rsa` algorithm (RSA signatures over SHA-1) for
+both server host keys and public key authentication, via the new
+`SSH_TUNNEL_DISABLED_ALGORITHMS` config (default
+`{"keys": ["ssh-rsa"], "pubkeys": ["ssh-rsa"]}`). RSA host keys and RSA tunnel
+credentials keep working: paramiko negotiates `rsa-sha2-256`/`rsa-sha2-512` instead,
+supported by OpenSSH 7.2 and later. This addresses PYSEC-2026-2858, whose fix in
+paramiko's `rsakey.py` has no tagged release yet, so a version bump is not an option.
+
+If a tunnel targets an SSH server too old to support the SHA-2 RSA algorithms, the
+handshake now fails with a `no matching host key type found` style error. Restore
+paramiko's defaults for those deployments with:
+
+```python
+SSH_TUNNEL_DISABLED_ALGORITHMS = {}
+```
+
 ### Flask 3 and Flask-SQLAlchemy 3
 
 Flask is bumped to `3.1.3` to pick up the fix for PYSEC-2026-2151, where a
