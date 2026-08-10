@@ -26,6 +26,20 @@ assists people when migrating to a new version.
 
 - [42393](https://github.com/apache/superset/pull/42393): Exported dataset YAML now carries a `uuid` for each metric and column so that custom folder assignments (which reference metrics/columns by UUID) survive an import into another workspace. This affects any export bundle that contains datasets, not just a dataset export: chart, dashboard, database and full-asset exports all embed the same dataset YAML, so a dashboard exported from this release also fails to import into an older one even though no dataset was exported directly. As with `folders` and `currency_code_column`, the affected `datasets/` files fail schema validation (`Unknown field: uuid`) when imported into Superset releases that predate this change; regenerate or hand-edit exports for older targets in mixed-version fleets.
 
+### Flask 3 and Flask-SQLAlchemy 3
+
+Flask is bumped to `3.1.3` to pick up the fix for PYSEC-2026-2151, where a
+response was missing the `Vary: Cookie` header when the session was only probed
+for key presence (e.g. `"key" in session`), so a cached response could be served
+to the wrong user behind a shared caching proxy or CDN.
+
+Flask 3.0 removed `flask._app_ctx_stack` and `flask.helpers.locked_cached_property`,
+so this also requires `flask-sqlalchemy>=3.0.5` and `flask-babel>=4.0.0`. Custom
+configuration and third-party extensions must be Flask 3 compatible; in particular
+Flask-SQLAlchemy 3 requires an application context for `db.session`, and APIs
+removed in Flask 3 (`flask.escape`, `flask.Markup`, `app.json_encoder`,
+`before_first_request`) are no longer available to `superset_config.py`.
+
 ### Soft delete is on by default, and purging is live
 
 `SOFT_DELETE` now ships **on** (`DEFAULT_FEATURE_FLAGS`), so deleting a
