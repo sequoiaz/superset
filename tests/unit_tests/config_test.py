@@ -515,6 +515,10 @@ def test_config_fingerprint_matches_md5_prefix() -> None:
 
 
 def test_config_fingerprint_unreadable_source() -> None:
+    """
+    When the config bytes could not be read, the fingerprint falls back to the
+    sentinel ``"unreadable"`` instead of raising.
+    """
     from superset.config import _config_fingerprint
 
     assert _config_fingerprint(None) == "unreadable"
